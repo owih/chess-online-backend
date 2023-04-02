@@ -9,8 +9,8 @@ datasource db {
 
 model User {
   id    Int          @id @default(autoincrement())
-  email String       @unique
-  name  String?
+  name  String
+  img   String?
   games UserOnGame[]
 }
 
@@ -22,7 +22,7 @@ model Game {
   state         String
   playerBlackId Int?
   playerWhiteId Int?
-  viewers Int[]
+  viewers       Int[]
 }
 
 model UserOnGame {
