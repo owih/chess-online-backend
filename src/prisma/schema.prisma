@@ -13,23 +13,18 @@ model User {
   img  String?
 }
 
-model ChessGameState {
-  id    Int     @id @default(autoincrement())
-  state String?
-}
-
 model ChessGameRoom {
   id            Int      @id @default(autoincrement())
   published     Boolean? @default(false)
-  stateId       Int
+  state         String?
   gameId        String   @unique
-  blackPlayerId Int?
   whitePlayerId Int?
+  blackPlayerId Int?
   viewersId     Int[]
-  playerTurn    PlayerTurn
+  currentPlayer    CurrentPlayer
 }
 
-enum PlayerTurn {
+enum CurrentPlayer {
   WHITE
   BLACK
 }

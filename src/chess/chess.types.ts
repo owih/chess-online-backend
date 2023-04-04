@@ -1,9 +1,10 @@
-import { ChessGameState, PlayerTurn, User } from '@prisma/client';
+export interface RoomListener {
+  room: string;
+  userId: number;
+}
 
-export interface ChessGameRoomTransformedData {
-  state: ChessGameState;
-  whitePlayer: User;
-  blackPlayer: User;
-  viewers: User[];
-  playerTurn: PlayerTurn;
+export enum ChessRoomEvents {
+  JOIN_ROOM = 'joinChessGameRoom',
+  LEAVE_ROOM = 'leaveChessGameRoom',
+  EVENT = 'chessGameEvent',
 }

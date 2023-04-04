@@ -1,5 +1,4 @@
 import {
-  ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
   OnGatewayInit,
@@ -8,6 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
+import { ChessRoomEvents, RoomListener } from './chess.types';
 
 @WebSocketGateway({
   cors: {
@@ -22,32 +22,31 @@ export class ChessGateway implements OnGatewayInit, OnGatewayConnection {
     console.log('INIT');
   }
 
-  @SubscribeMessage('joinChessGameRoom')
-  handleRoomJoin(client: Socket, room: string) {
-    console.log(room);
-    client.join(room);
-    client.emit('joinedRoom', room);
+  @SubscribeMessage(ChessRoomEvents.JOIN_ROOM)
+  handleRoomJoin(client: Socket, data: RoomListener) {
+    console.log(data);
+    console.log(data.userId, 'connected to room', data.room);
+    client.join(data.room);
+    this.server.to(data.room).emit(ChessRoomEvents.LEAVE_ROOM, data.userId);
   }
 
-  @SubscribeMessage('leaveChessGameRoom')
-  handleRoomLeave(client: Socket, room: string) {
-    console.log(room);
-    client.leave(room);
-    client.emit('leftRoom', room);
+  @SubscribeMessage(ChessRoomEvents.LEAVE_ROOM)
+  handleRoomLeave(client: Socket, data: RoomListener) {
+    console.log(data.userId, 'leaved from room', data.room);
+    client.leave(data.room);
+    this.server.to(data.room).emit(ChessRoomEvents.LEAVE_ROOM, data.userId);
   }
 
-  @SubscribeMessage('chessGameEvent')
+  @SubscribeMessage(ChessRoomEvents.EVENT)
   handleEvent(
-    @MessageBody() data: { sender: string; room: string; message: string },
-    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userId: string; room: string; data: string },
   ) {
     console.log(data);
-    this.server.emit('chessGameEvent', data.message);
-    this.server.to(data.room).emit(data.message);
+    // this.server.emit('chessGameEvent', data.message);
+    this.server.to(data.room).emit(ChessRoomEvents.EVENT, data.data);
   }
 
   handleConnection(client: Socket, ...args): any {
     console.log('connected');
-    this.server.emit('chessGameEvent', 'CLIENT CONNECTED');
   }
 }
