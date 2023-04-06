@@ -27,7 +27,7 @@ export class ChessGateway implements OnGatewayInit, OnGatewayConnection {
     console.log(data);
     console.log(data.userId, 'connected to room', data.room);
     client.join(data.room);
-    this.server.to(data.room).emit(ChessRoomEvents.LEAVE_ROOM, data.userId);
+    this.server.to(data.room).emit(ChessRoomEvents.JOIN_ROOM, data.userId);
   }
 
   @SubscribeMessage(ChessRoomEvents.LEAVE_ROOM)
@@ -42,8 +42,7 @@ export class ChessGateway implements OnGatewayInit, OnGatewayConnection {
     @MessageBody() data: { userId: string; room: string; data: string },
   ) {
     console.log(data);
-    // this.server.emit('chessGameEvent', data.message);
-    this.server.to(data.room).emit(ChessRoomEvents.EVENT, data.data);
+    this.server.to(data.room).emit(ChessRoomEvents.EVENT, data);
   }
 
   handleConnection(client: Socket, ...args): any {
