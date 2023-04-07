@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChessGameRoom, CurrentPlayer } from '@prisma/client';
 import GetChessGameRoomDto from './dto/get-chess-game-room.dto';
+import { ChessGameProcess } from './chess.types';
 
 @Injectable()
 export class ChessService {
@@ -70,6 +71,7 @@ export class ChessService {
           data: {
             gameId: dto.id,
             currentPlayer: CurrentPlayer.WHITE,
+            gameProcess: ChessGameProcess.ENDED,
           },
         });
       }
@@ -89,16 +91,30 @@ export class ChessService {
 
   async updateChessGameRoom(dto: ChessGameRoom): Promise<ChessGameRoom> {
     try {
-      if (!dto.id) {
+      if (!dto.gameId) {
         throw new HttpException(
           { message: 'Bad request', response: 'Bad request' },
           HttpStatus.BAD_REQUEST,
         );
       }
 
+      if (!dto.state) {
+        return this.prisma.chessGameRoom.update({
+          where: {
+            gameId: dto.gameId,
+          },
+          data: {
+            gameProcess: dto.gameProcess,
+            whitePlayerId: dto.whitePlayerId,
+            blackPlayerId: dto.blackPlayerId,
+            viewersId: dto.viewersId,
+          },
+        });
+      }
+
       return this.prisma.chessGameRoom.update({
         where: {
-          id: dto.id,
+          gameId: dto.gameId,
         },
         data: dto,
       });

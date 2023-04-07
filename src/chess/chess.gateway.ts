@@ -7,7 +7,15 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { ChessRoomEvents, RoomListener } from './chess.types';
+import {
+  ChessClientRequest,
+  ChessGamePlayer,
+  ChessGameProcess,
+  ChessGameState,
+  ChessGameViewer,
+  ChessRoomEvents,
+  RoomListener,
+} from './chess.types';
 
 @WebSocketGateway({
   cors: {
@@ -23,24 +31,49 @@ export class ChessGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   @SubscribeMessage(ChessRoomEvents.JOIN_ROOM)
-  handleRoomJoin(client: Socket, data: RoomListener) {
+  handleRoomJoin(client: Socket, data: ChessClientRequest<RoomListener>) {
     console.log(data);
-    console.log(data.userId, 'connected to room', data.room);
+    console.log(data.data.userId, 'connected to room', data.room);
     client.join(data.room);
-    this.server.to(data.room).emit(ChessRoomEvents.JOIN_ROOM, data.userId);
+    this.server.to(data.room).emit(ChessRoomEvents.JOIN_ROOM, data.data.userId);
+    this.server.to(data.room).emit(ChessRoomEvents.VIEWERS, data);
   }
 
   @SubscribeMessage(ChessRoomEvents.LEAVE_ROOM)
-  handleRoomLeave(client: Socket, data: RoomListener) {
-    console.log(data.userId, 'leaved from room', data.room);
-    client.leave(data.room);
-    this.server.to(data.room).emit(ChessRoomEvents.LEAVE_ROOM, data.userId);
+  handleRoomLeave(client: Socket, data: ChessClientRequest<RoomListener>) {
+    console.log(data, 'leaved from room');
+    this.server
+      .to(data.room)
+      .emit(ChessRoomEvents.LEAVE_ROOM, data.data.userId);
+    this.server.to(data.room).emit(ChessRoomEvents.VIEWERS, data);
+  }
+
+  @SubscribeMessage(ChessRoomEvents.PROCESS)
+  handleProcessMessage(
+    @MessageBody() data: ChessClientRequest<ChessGameProcess>,
+  ) {
+    console.log(data);
+    this.server.to(data.room).emit(ChessRoomEvents.PROCESS, data);
+  }
+
+  @SubscribeMessage(ChessRoomEvents.PLAYER)
+  handlePlayerMessage(
+    @MessageBody() data: ChessClientRequest<ChessGamePlayer>,
+  ) {
+    console.log(data);
+    this.server.to(data.room).emit(ChessRoomEvents.PLAYER, data);
+  }
+
+  @SubscribeMessage(ChessRoomEvents.VIEWERS)
+  handleViewerMessage(
+    @MessageBody() data: ChessClientRequest<ChessGameViewer>,
+  ) {
+    console.log(data);
+    this.server.to(data.room).emit(ChessRoomEvents.VIEWERS, data);
   }
 
   @SubscribeMessage(ChessRoomEvents.EVENT)
-  handleEvent(
-    @MessageBody() data: { userId: string; room: string; data: string },
-  ) {
+  handleEvent(@MessageBody() data: ChessClientRequest<ChessGameState>) {
     console.log(data);
     this.server.to(data.room).emit(ChessRoomEvents.EVENT, data);
   }

@@ -4,6 +4,7 @@ import { User } from '@prisma/client';
 import CreateUserDto from './dto/create-user.dto';
 import GetUserDto from './dto/get-user.dto';
 import ChangeUserInfo from './dto/change-name.dto';
+import GetManyUsersDto from './dto/get-many-users.dto';
 
 @Injectable()
 export class UserService {
@@ -43,29 +44,17 @@ export class UserService {
       );
     }
   }
-  async getUsersList(dto: GetUserDto): Promise<User> {
+  async getUsersList(dto: GetManyUsersDto): Promise<User[]> {
     console.log(dto);
     try {
-      if (!Number(dto.id)) {
-        throw new HttpException(
-          { message: 'Bad request', response: 'Bad request' },
-          HttpStatus.BAD_REQUEST,
-        );
+      if (!dto.idList.length) {
+        return [];
       }
-      const user: User = await this.prisma.user.findUnique({
+      return await this.prisma.user.findMany({
         where: {
-          id: Number(dto.id),
+          id: { in: dto.idList },
         },
       });
-
-      if (!user) {
-        throw new HttpException(
-          { message: 'Unauthorized', response: 'Unauthorized' },
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      return user;
     } catch (e) {
       console.log(e);
       if (e instanceof HttpException) {

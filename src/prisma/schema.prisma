@@ -14,19 +14,25 @@ model User {
 }
 
 model ChessGameRoom {
-  id            Int      @id @default(autoincrement())
-  published     Boolean? @default(false)
+  id            Int              @id @default(autoincrement())
   state         String?
-  gameId        String   @unique
+  gameId        String           @unique
   whitePlayerId Int?
   blackPlayerId Int?
   viewersId     Int[]
-  currentPlayer    CurrentPlayer
+  currentPlayer CurrentPlayer
+  gameProcess   ChessGameProcess
 }
 
 enum CurrentPlayer {
   WHITE
   BLACK
+}
+
+enum ChessGameProcess {
+  STARTED
+  PAUSED
+  ENDED
 }
 
 // TODO: Current chess-game stat per user

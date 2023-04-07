@@ -3,6 +3,7 @@ import CreateUserDto from './dto/create-user.dto';
 import { UserService } from './user.service';
 import GetUserDto from './dto/get-user.dto';
 import ChangeUserInfo from './dto/change-name.dto';
+import GetManyUsersDto from './dto/get-many-users.dto';
 
 @Controller('user')
 export class UserController {
@@ -16,6 +17,11 @@ export class UserController {
   @Post()
   create(@Body() userDto: CreateUserDto) {
     return this.userService.createUser(userDto);
+  }
+
+  @Post('/many')
+  getMany(@Body() userDto: GetManyUsersDto) {
+    return this.userService.getUsersList(userDto);
   }
 
   @Put()
