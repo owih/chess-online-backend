@@ -33,6 +33,7 @@ enum ChessGameProcess {
   STARTED
   PAUSED
   ENDED
+  RESUMED
 }
 
 // TODO: Current chess-game stat per user

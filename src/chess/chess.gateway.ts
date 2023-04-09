@@ -1,6 +1,7 @@
 import {
   MessageBody,
   OnGatewayConnection,
+  OnGatewayDisconnect,
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
@@ -9,13 +10,14 @@ import {
 import { Socket, Server } from 'socket.io';
 import {
   ChessClientRequest,
+  ChessGameMemberEvent,
   ChessGamePlayer,
-  ChessGameProcess,
   ChessGameState,
   ChessGameViewer,
   ChessRoomEvents,
   RoomListener,
 } from './chess.types';
+import { ChessGameProcess } from '@prisma/client';
 
 @WebSocketGateway({
   cors: {
@@ -23,36 +25,43 @@ import {
   },
   namespace: '/socket.io',
 })
-export class ChessGateway implements OnGatewayInit, OnGatewayConnection {
+export class ChessGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer() server: Server;
 
-  afterInit(server: any) {
+  afterInit(server: Socket) {
     console.log('INIT');
   }
 
   @SubscribeMessage(ChessRoomEvents.JOIN_ROOM)
   handleRoomJoin(client: Socket, data: ChessClientRequest<RoomListener>) {
-    console.log(data);
-    console.log(data.data.userId, 'connected to room', data.room);
+    const userId = data.userId;
     client.join(data.room);
-    this.server.to(data.room).emit(ChessRoomEvents.JOIN_ROOM, data.data.userId);
-    this.server.to(data.room).emit(ChessRoomEvents.VIEWERS, data);
+    this.server.to(data.room).emit(ChessRoomEvents.JOIN_ROOM, data);
+    client.on('disconnecting', () => {
+      const targetRoom = Array.from(client.rooms)[client.rooms.size - 1];
+      const data = {
+        userId,
+        room: targetRoom,
+        data: { userId, room: targetRoom, event: ChessGameMemberEvent.LEAVE },
+      };
+      this.server.to(targetRoom).emit(ChessRoomEvents.LEAVE_ROOM, data);
+    });
   }
 
   @SubscribeMessage(ChessRoomEvents.LEAVE_ROOM)
   handleRoomLeave(client: Socket, data: ChessClientRequest<RoomListener>) {
-    console.log(data, 'leaved from room');
     this.server
       .to(data.room)
       .emit(ChessRoomEvents.LEAVE_ROOM, data.data.userId);
-    this.server.to(data.room).emit(ChessRoomEvents.VIEWERS, data);
+    this.server.to(data.room).emit(ChessRoomEvents.LEAVE_ROOM, data);
   }
 
   @SubscribeMessage(ChessRoomEvents.PROCESS)
   handleProcessMessage(
     @MessageBody() data: ChessClientRequest<ChessGameProcess>,
   ) {
-    console.log(data);
     this.server.to(data.room).emit(ChessRoomEvents.PROCESS, data);
   }
 
@@ -60,7 +69,6 @@ export class ChessGateway implements OnGatewayInit, OnGatewayConnection {
   handlePlayerMessage(
     @MessageBody() data: ChessClientRequest<ChessGamePlayer>,
   ) {
-    console.log(data);
     this.server.to(data.room).emit(ChessRoomEvents.PLAYER, data);
   }
 
@@ -68,17 +76,19 @@ export class ChessGateway implements OnGatewayInit, OnGatewayConnection {
   handleViewerMessage(
     @MessageBody() data: ChessClientRequest<ChessGameViewer>,
   ) {
-    console.log(data);
     this.server.to(data.room).emit(ChessRoomEvents.VIEWERS, data);
   }
 
   @SubscribeMessage(ChessRoomEvents.EVENT)
   handleEvent(@MessageBody() data: ChessClientRequest<ChessGameState>) {
-    console.log(data);
     this.server.to(data.room).emit(ChessRoomEvents.EVENT, data);
   }
 
-  handleConnection(client: Socket, ...args): any {
+  handleConnection(client: Socket, ...args): void {
     console.log('connected');
+  }
+
+  handleDisconnect(client: Socket, ...args): void {
+    console.log('DISCONNECT IMPLEMENT');
   }
 }

@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ChessService } from './chess.service';
 import GetChessGameRoomDto from './dto/get-chess-game-room.dto';
 import { ChessGameRoom } from '@prisma/client';
+import UpdateChessGameMemberDto from './dto/update-chess-game-member.dto';
 
 @Controller('chess')
 export class ChessController {
@@ -25,5 +26,12 @@ export class ChessController {
   @Post()
   setChessGameState(@Body() updateChessGameRoomDto: ChessGameRoom) {
     return this.userService.updateChessGameRoom(updateChessGameRoomDto);
+  }
+
+  @Post('member')
+  setChessGameMember(
+    @Body() updateChessGameMemberDto: UpdateChessGameMemberDto,
+  ) {
+    return this.userService.updateChessGameMember(updateChessGameMemberDto);
   }
 }

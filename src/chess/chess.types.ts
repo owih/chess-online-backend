@@ -3,7 +3,7 @@ export interface RoomListener {
   event: ChessGameMemberEvent;
 }
 
-enum ChessGameMemberEvent {
+export enum ChessGameMemberEvent {
   JOIN = 'JOIN',
   LEAVE = 'LEAVE',
 }
@@ -27,15 +27,9 @@ export enum FigureName {
   PAWN = 'Pawn',
 }
 
-enum Colors {
-  WHITE = 'white',
-  BLACK = 'black',
-}
-
-export enum ChessGameProcess {
-  STARTED = 'STARTED',
-  PAUSED = 'PAUSED',
-  ENDED = 'ENDED',
+export enum Colors {
+  WHITE = 'WHITE',
+  BLACK = 'BLACK',
 }
 
 export interface ChessGameState {
